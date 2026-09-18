@@ -7,6 +7,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
   static const _shortBreakKey = 'short_break_minutes';
   static const _longBreakKey = 'long_break_minutes';
   static const _soundKey = 'sound_enabled';
+  static const _notificationSoundKey = 'notification_sound_enabled';
   static const _hapticsKey = 'haptics_enabled';
   static const _themeKey = 'theme_mode';
 
@@ -59,6 +60,12 @@ class SettingsRepositoryImpl implements SettingsRepository {
   }
 
   @override
+  Future<bool> getNotificationSoundEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_notificationSoundKey) ?? true;
+  }
+
+  @override
   Future<void> setSoundEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_soundKey, enabled);
@@ -68,6 +75,12 @@ class SettingsRepositoryImpl implements SettingsRepository {
   Future<void> setHapticsEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_hapticsKey, enabled);
+  }
+
+  @override
+  Future<void> setNotificationSoundEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_notificationSoundKey, enabled);
   }
 
   @override

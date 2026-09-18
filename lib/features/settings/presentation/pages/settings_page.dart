@@ -28,7 +28,28 @@ class SettingsPage extends StatelessWidget {
             const SizedBox(height: 22),
             const _SectionHeader(title: 'FEEDBACK'),
             const SizedBox(height: 12),
-            _ToggleTile(label: 'Completion sound', icon: Icons.volume_up_outlined, value: state.soundEnabled, onChanged: context.read<SettingsCubit>().setSound),
+            _ToggleTile(
+              label: 'Sound effects',
+              icon: Icons.music_note_outlined,
+              value: state.soundEnabled,
+              onChanged: (value) {
+                context.read<SettingsCubit>().setSound(value);
+                context.read<TimerBloc>().add(
+                      TimerSoundEffectsChanged(value),
+                    );
+              },
+            ),
+            _ToggleTile(
+              label: 'Notification sound',
+              icon: Icons.notifications_active_outlined,
+              value: state.notificationSoundEnabled,
+              onChanged: (value) {
+                context.read<SettingsCubit>().setNotificationSound(value);
+                context.read<TimerBloc>().add(
+                      TimerNotificationSoundChanged(value),
+                    );
+              },
+            ),
             _ToggleTile(label: 'Haptic feedback', icon: Icons.vibration_outlined, value: state.hapticsEnabled, onChanged: context.read<SettingsCubit>().setHaptics),
             const SizedBox(height: 22),
             const _SectionHeader(title: 'APPEARANCE'),

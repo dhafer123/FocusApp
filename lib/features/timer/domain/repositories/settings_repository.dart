@@ -6,8 +6,10 @@ abstract class SettingsRepository {
   Future<void> setShortBreakMinutes(int minutes);
   Future<void> setLongBreakMinutes(int minutes);
   Future<bool> getSoundEnabled();
+  Future<bool> getNotificationSoundEnabled();
   Future<bool> getHapticsEnabled();
   Future<void> setSoundEnabled(bool enabled);
+  Future<void> setNotificationSoundEnabled(bool enabled);
   Future<void> setHapticsEnabled(bool enabled);
   Future<String> getThemeMode();
   Future<void> setThemeMode(String mode);

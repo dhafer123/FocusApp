@@ -12,6 +12,18 @@ class TimerPaused extends TimerEvent {}
 class TimerReset extends TimerEvent {}
 class TimerSkipped extends TimerEvent {}
 class TimerTicked extends TimerEvent {}
+class TimerAppResumed extends TimerEvent {}
+class TimerSoundEffectsChanged extends TimerEvent {
+  const TimerSoundEffectsChanged(this.enabled);
+
+  final bool enabled;
+}
+
+class TimerNotificationSoundChanged extends TimerEvent {
+  const TimerNotificationSoundChanged(this.enabled);
+
+  final bool enabled;
+}
 class TimerSettingsLoaded extends TimerEvent {
   const TimerSettingsLoaded({
     required this.focusMinutes,

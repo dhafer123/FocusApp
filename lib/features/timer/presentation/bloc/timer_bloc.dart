@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart';
 
+import '../../../../core/notifications/timer_notification_service.dart';
 import '../../domain/entities/session_type.dart';
 import '../../domain/repositories/settings_repository.dart';
 import '../../../stats/domain/entities/focus_session_record.dart';
@@ -21,6 +22,9 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     on<TimerReset>(_onReset);
     on<TimerSkipped>(_onSkipped);
     on<TimerTicked>(_onTicked);
+    on<TimerAppResumed>(_onAppResumed);
+    on<TimerSoundEffectsChanged>(_onSoundEffectsChanged);
+    on<TimerNotificationSoundChanged>(_onNotificationSoundChanged);
     Future.microtask(() async {
       add(TimerSettingsLoaded(
         focusMinutes: await settingsRepository.getFocusMinutes(),
@@ -34,9 +38,11 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   final SessionHistoryRepository sessionHistoryRepository;
   Timer? _ticker;
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _notificationPlayer = AudioPlayer();
   final Random _random = Random();
   String? _loadedTrack;
   int _audioRequest = 0;
+  DateTime? _endTime;
   int _focusMinutes = 25;
   int _shortBreakMinutes = 5;
   int _longBreakMinutes = 15;
@@ -61,6 +67,8 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   }
 
   Future<void> _onStarted(TimerStarted event, Emitter<TimerState> emit) async {
+    _endTime = DateTime.now().add(Duration(seconds: state.remainingSeconds));
+    unawaited(_scheduleNotification());
     _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
       add(TimerTicked());
     });
@@ -73,6 +81,8 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     _ticker = null;
     emit(state.copyWith(isRunning: false));
     ++_audioRequest;
+    _endTime = null;
+    unawaited(TimerNotificationService.instance.cancel());
     unawaited(_audioPlayer.pause());
   }
 
@@ -81,6 +91,8 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     _ticker?.cancel();
     _ticker = null;
     ++_audioRequest;
+    _endTime = null;
+    unawaited(TimerNotificationService.instance.cancel());
     unawaited(_audioPlayer.stop());
     _loadedTrack = null;
     emit(state.copyWith(
@@ -91,16 +103,67 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   }
 
   Future<void> _onSkipped(TimerSkipped event, Emitter<TimerState> emit) async {
-    await _advanceTimer(emit);
+    await _advanceTimer(emit, playCompletionSound: false);
   }
 
   Future<void> _onTicked(TimerTicked event, Emitter<TimerState> emit) async {
+    if (_endTime != null) {
+      final secondsLeft = _endTime!.difference(DateTime.now()).inSeconds;
+      if (secondsLeft <= 0) {
+        await _advanceTimer(emit);
+        return;
+      }
+      if (secondsLeft < state.remainingSeconds) {
+        emit(state.copyWith(remainingSeconds: secondsLeft));
+        return;
+      }
+    }
+
     if (state.remainingSeconds <= 1) {
       await _advanceTimer(emit);
       return;
     }
 
     emit(state.copyWith(remainingSeconds: state.remainingSeconds - 1));
+  }
+
+  Future<void> _onAppResumed(
+    TimerAppResumed event,
+    Emitter<TimerState> emit,
+  ) async {
+    if (!state.isRunning || _endTime == null) return;
+    final secondsLeft = _endTime!.difference(DateTime.now()).inSeconds;
+    if (secondsLeft <= 0) {
+      await _advanceTimer(emit);
+      return;
+    }
+    emit(state.copyWith(remainingSeconds: secondsLeft));
+  }
+
+  Future<void> _onSoundEffectsChanged(
+    TimerSoundEffectsChanged event,
+    Emitter<TimerState> emit,
+  ) async {
+    ++_audioRequest;
+    if (!event.enabled) {
+      _loadedTrack = null;
+      await _audioPlayer.stop();
+      return;
+    }
+    if (state.isRunning) {
+      unawaited(
+        _startSoundtrack(_audioRequest, enabled: event.enabled),
+      );
+    }
+  }
+
+  Future<void> _onNotificationSoundChanged(
+    TimerNotificationSoundChanged event,
+    Emitter<TimerState> emit,
+  ) async {
+    if (state.isRunning && _endTime != null) {
+      unawaited(_scheduleNotification());
+    }
   }
 
   int _durationFor(SessionType type) {
@@ -114,10 +177,18 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     }
   }
 
-  Future<void> _advanceTimer(Emitter<TimerState> emit) async {
+  Future<void> _advanceTimer(
+    Emitter<TimerState> emit, {
+    bool playCompletionSound = true,
+  }) async {
     ++_audioRequest;
     unawaited(_audioPlayer.stop());
     _loadedTrack = null;
+    _endTime = null;
+    unawaited(TimerNotificationService.instance.cancel());
+    if (playCompletionSound) {
+      unawaited(_playCompletionSound());
+    }
 
     if (state.type == SessionType.focus) {
       final completed = state.completedFocusSessions + 1;
@@ -156,7 +227,8 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     ));
   }
 
-  Future<void> _startSoundtrack(int request) async {
+  Future<void> _startSoundtrack(int request, {bool? enabled}) async {
+    if (!(enabled ?? await settingsRepository.getSoundEnabled())) return;
     if (_loadedTrack != null) {
       if (request == _audioRequest && state.isRunning) {
         await _audioPlayer.play();
@@ -185,10 +257,34 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     }
   }
 
+  Future<void> _scheduleNotification() async {
+    final soundEnabled =
+        await settingsRepository.getNotificationSoundEnabled();
+    if (_endTime != null && state.isRunning) {
+      await TimerNotificationService.instance.schedule(
+        _endTime!,
+        soundEnabled: soundEnabled,
+      );
+    }
+  }
+
+  Future<void> _playCompletionSound() async {
+    if (!await settingsRepository.getNotificationSoundEnabled()) return;
+    try {
+      await _notificationPlayer.setAsset(
+        'assets/soundeffects/notification.mp3',
+      );
+      await _notificationPlayer.play();
+    } catch (_) {
+      // Completion notification remains available if in-app playback fails.
+    }
+  }
+
   @override
   Future<void> close() async {
     _ticker?.cancel();
     await _audioPlayer.dispose();
+    await _notificationPlayer.dispose();
     return super.close();
   }
 }
