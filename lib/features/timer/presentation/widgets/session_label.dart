@@ -18,11 +18,7 @@ class SessionLabel extends StatelessWidget {
 
     return AnimatedDefaultTextStyle(
       duration: const Duration(milliseconds: 250),
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: color,
-      ),
+      style: AppTheme.pixelText(size: 16, color: color, weight: FontWeight.w600),
       child: Text(_labelText(type)),
     );
   }

@@ -6,7 +6,7 @@ import '../../domain/entities/session_type.dart';
 import '../bloc/timer_bloc.dart';
 import '../bloc/timer_event.dart';
 import '../bloc/timer_state.dart';
-import '../widgets/countdown_ring.dart';
+import '../widgets/campfire_scene.dart';
 import '../widgets/control_buttons.dart';
 import '../widgets/session_dots.dart';
 import '../widgets/session_label.dart';
@@ -18,43 +18,80 @@ class TimerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: BlocBuilder<TimerBloc, TimerState>(
-          builder: (context, state) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const CampfireScene(),
+          Container(color: AppTheme.background.withValues(alpha: 0.55)),
+          SafeArea(
+            child: BlocBuilder<TimerBloc, TimerState>(
+              builder: (context, state) {
+                final accent = state.type == SessionType.focus
+                    ? AppTheme.focusAccent
+                    : state.type == SessionType.shortBreak
+                    ? AppTheme.shortBreakAccent
+                    : AppTheme.longBreakAccent;
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
                   children: [
-                    SessionLabel(type: state.type),
-                    const SizedBox(height: 24),
-                    CountdownRing(
-                      progress: state.remainingSeconds / state.totalSeconds,
-                      color: state.type == SessionType.focus
-                          ? AppTheme.focusAccent
-                          : state.type == SessionType.shortBreak
-                              ? AppTheme.shortBreakAccent
-                              : AppTheme.longBreakAccent,
-                      time: _formatTime(state.remainingSeconds),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'WHISKER WORK',
+                          style: AppTheme.pixelText(
+                            size: 14,
+                            color: AppTheme.textSecondary,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                        Container(
+                          width: 36,
+                          height: 36,
+                          padding: const EdgeInsets.all(3),
+                          decoration: AppTheme.block(),
+                          child: Image.asset(
+                            'assets/logo.png',
+                            fit: BoxFit.contain,
+                            filterQuality: FilterQuality.none,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 110),
+                    SessionLabel(type: state.type),
+                    const SizedBox(height: 22),
+                    Center(
+                      child: Text(
+                        _formatTime(state.remainingSeconds),
+                        style: AppTheme.timerText(),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
                     ControlButtons(
                       isRunning: state.isRunning,
-                      onReset: () => context.read<TimerBloc>().add(TimerReset()),
+                      accent: accent,
+                      onReset: () =>
+                          context.read<TimerBloc>().add(TimerReset()),
                       onToggle: () => context.read<TimerBloc>().add(
                         state.isRunning ? TimerPaused() : TimerStarted(),
                       ),
-                      onSkip: () => context.read<TimerBloc>().add(TimerSkipped()),
+                      onSkip: () =>
+                          context.read<TimerBloc>().add(TimerSkipped()),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     SessionDots(completed: state.completedFocusSessions),
+                    const SizedBox(height: 20),
+                    _MotivationQuote(
+                      progress: 1 - state.remainingSeconds / state.totalSeconds,
+                      accent: accent,
+                    ),
                   ],
-                ),
-              ),
-            );
-          },
-        ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -63,5 +100,40 @@ class TimerPage extends StatelessWidget {
     final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
     final remainder = (seconds % 60).toString().padLeft(2, '0');
     return '$minutes:$remainder';
+  }
+}
+
+class _MotivationQuote extends StatelessWidget {
+  const _MotivationQuote({required this.progress, required this.accent});
+
+  static const quotes = [
+    'Start where you are.',
+    'One quiet minute at a time.',
+    'Small steps still move you forward.',
+    'Keep going. You are building momentum.',
+    'Your attention is a place you can return to.',
+    'The work is becoming lighter.',
+    'Stay with it. You are closer than you think.',
+    'Finish this moment with care.',
+  ];
+
+  final double progress;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final quoteIndex = (progress.clamp(0, 0.9999) * quotes.length).floor();
+    return SizedBox(
+      height: 64,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 350),
+        child: Text(
+          quotes[quoteIndex],
+          key: ValueKey(quoteIndex),
+          textAlign: TextAlign.center,
+          style: AppTheme.pixelText(size: 20, color: accent),
+        ),
+      ),
+    );
   }
 }

@@ -6,12 +6,14 @@ class ControlButtons extends StatelessWidget {
   const ControlButtons({
     super.key,
     required this.isRunning,
+    required this.accent,
     required this.onReset,
     required this.onToggle,
     required this.onSkip,
   });
 
   final bool isRunning;
+  final Color accent;
   final VoidCallback onReset;
   final VoidCallback onToggle;
   final VoidCallback onSkip;
@@ -21,11 +23,7 @@ class ControlButtons extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        IconButton(
-          onPressed: onReset,
-          icon: const Icon(Icons.restart_alt_rounded),
-          color: AppTheme.textSecondary,
-        ),
+        _PixelButton(label: 'R', onPressed: onReset, accent: accent),
         const SizedBox(width: 24),
         SizedBox(
           width: 78,
@@ -33,9 +31,9 @@ class ControlButtons extends StatelessWidget {
           child: FilledButton(
             onPressed: onToggle,
             style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.focusAccent,
-              foregroundColor: Colors.black,
-              shape: const CircleBorder(),
+              backgroundColor: accent,
+              foregroundColor: AppTheme.blockShadow,
+              shape: const BeveledRectangleBorder(),
             ),
             child: Icon(
               isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
@@ -44,12 +42,32 @@ class ControlButtons extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 24),
-        IconButton(
-          onPressed: onSkip,
-          icon: const Icon(Icons.skip_next_rounded),
-          color: AppTheme.textSecondary,
-        ),
+        _PixelButton(label: '>', onPressed: onSkip, accent: accent),
       ],
     );
   }
+}
+
+class _PixelButton extends StatelessWidget {
+  const _PixelButton({required this.label, required this.onPressed, required this.accent});
+
+  final String label;
+  final VoidCallback onPressed;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 56,
+        height: 56,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: accent,
+            side: BorderSide(color: accent, width: 2),
+            shape: const BeveledRectangleBorder(),
+            padding: EdgeInsets.zero,
+          ),
+          child: Text(label, style: AppTheme.pixelText(size: 20, color: accent, weight: FontWeight.w700)),
+        ),
+      );
 }

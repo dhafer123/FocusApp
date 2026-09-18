@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -57,17 +58,72 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) => navigationShell.goBranch(
-          index,
-          initialLocation: index == navigationShell.currentIndex,
+      bottomNavigationBar: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          systemNavigationBarColor: AppTheme.background,
+          systemNavigationBarIconBrightness: Brightness.light,
         ),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.timelapse_outlined), selectedIcon: Icon(Icons.timelapse), label: 'Timer'),
-          NavigationDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart), label: 'Stats'),
-          NavigationDestination(icon: Icon(Icons.tune_outlined), selectedIcon: Icon(Icons.tune), label: 'Settings'),
-        ],
+        child: SafeArea(
+          top: false,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+            decoration: const BoxDecoration(
+              color: AppTheme.backgroundRaised,
+              border: Border(
+                top: BorderSide(color: AppTheme.blockShadow, width: 2),
+              ),
+            ),
+            child: Row(
+              children: List.generate(3, (index) {
+                final active = navigationShell.currentIndex == index;
+                final labels = ['TIME', 'STATS', 'SET'];
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: OutlinedButton(
+                      onPressed: () {
+                        if (index == 1) {
+                          context.read<StatsCubit>().load();
+                        }
+                        navigationShell.goBranch(
+                          index,
+                          initialLocation:
+                              index == navigationShell.currentIndex,
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: active
+                            ? AppTheme.focusAccent
+                            : Colors.transparent,
+                        foregroundColor: active
+                            ? AppTheme.blockShadow
+                            : AppTheme.textSecondary,
+                        side: BorderSide(
+                          color: active
+                              ? AppTheme.focusAccent
+                              : AppTheme.blockShadow,
+                          width: 2,
+                        ),
+                        shape: const BeveledRectangleBorder(),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        labels[index],
+                        style: AppTheme.pixelText(
+                          size: 12,
+                          color: active
+                              ? AppTheme.blockShadow
+                              : AppTheme.textSecondary,
+                          weight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
       ),
     );
   }

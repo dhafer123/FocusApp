@@ -18,8 +18,8 @@ class SessionDots extends StatelessWidget {
           height: 8,
           margin: const EdgeInsets.symmetric(horizontal: 5),
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: active ? AppTheme.focusAccent : Colors.white.withValues(alpha: 0.2),
+            color: active ? AppTheme.focusAccent : Colors.transparent,
+            border: Border.all(color: active ? AppTheme.focusAccent : AppTheme.blockShadow, width: 2),
           ),
         );
       }),

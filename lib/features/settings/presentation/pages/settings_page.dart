@@ -16,9 +16,9 @@ class SettingsPage extends StatelessWidget {
         builder: (context, state) => ListView(
           padding: const EdgeInsets.fromLTRB(22, 28, 22, 28),
           children: [
-            const Text('Settings', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700)),
+            Text('Settings', style: AppTheme.pixelText(size: 32, weight: FontWeight.w700)),
             const SizedBox(height: 8),
-            const Text('Shape the pace to fit your day.', style: TextStyle(color: AppTheme.textSecondary)),
+            Text('Shape the pace to fit your day.', style: AppTheme.pixelText(size: 15, color: AppTheme.textSecondary)),
             const SizedBox(height: 30),
             const _SectionHeader(title: 'DURATIONS', trailing: 'minutes'),
             const SizedBox(height: 12),
@@ -33,20 +33,25 @@ class SettingsPage extends StatelessWidget {
             const SizedBox(height: 22),
             const _SectionHeader(title: 'APPEARANCE'),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(color: const Color(0xFF162238), borderRadius: BorderRadius.circular(14)),
-              child: SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'system', label: Text('System')),
-                  ButtonSegment(value: 'light', label: Text('Light')),
-                  ButtonSegment(value: 'dark', label: Text('Dark')),
-                ],
-                selected: {state.themeMode},
-                onSelectionChanged: (selection) => context.read<SettingsCubit>().setTheme(selection.first),
-                showSelectedIcon: false,
-              ),
-            ),
+            Row(children: ['system', 'light', 'dark'].map((mode) {
+              final active = state.themeMode == mode;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: OutlinedButton(
+                    onPressed: () => context.read<SettingsCubit>().setTheme(mode),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: active ? AppTheme.focusAccent : Colors.transparent,
+                      foregroundColor: active ? AppTheme.blockShadow : AppTheme.textSecondary,
+                      side: BorderSide(color: active ? AppTheme.focusAccent : AppTheme.blockShadow, width: 2),
+                      shape: const BeveledRectangleBorder(),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(mode.toUpperCase(), style: AppTheme.pixelText(size: 11, color: active ? AppTheme.blockShadow : AppTheme.textSecondary, weight: FontWeight.w700)),
+                  ),
+                ),
+              );
+            }).toList()),
           ],
         ),
       ),
@@ -68,13 +73,13 @@ class _DurationTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(color: const Color(0xFF162238), borderRadius: BorderRadius.circular(14)),
+      decoration: AppTheme.block(),
       child: Row(
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(label, style: AppTheme.pixelText(size: 15, weight: FontWeight.w600)),
           const Spacer(),
           IconButton(onPressed: value > 1 ? () async { await cubit.setDuration(type, value - 1); timer.add(TimerSettingsRefreshed()); } : null, icon: const Icon(Icons.remove), color: AppTheme.textSecondary),
-          SizedBox(width: 42, child: Center(child: Text('$value', style: const TextStyle(fontSize: 20, color: AppTheme.focusAccent, fontWeight: FontWeight.w600)))),
+          SizedBox(width: 42, child: Center(child: Text('$value', style: AppTheme.timerText(size: 20)))),
           IconButton(onPressed: () async { await cubit.setDuration(type, value + 1); timer.add(TimerSettingsRefreshed()); }, icon: const Icon(Icons.add), color: AppTheme.textSecondary),
         ],
       ),
@@ -94,13 +99,23 @@ class _ToggleTile extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-        decoration: BoxDecoration(color: const Color(0xFF162238), borderRadius: BorderRadius.circular(14)),
+        decoration: AppTheme.block(),
         child: Row(children: [
           Icon(icon, color: AppTheme.textSecondary, size: 20),
           const SizedBox(width: 13),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(label, style: AppTheme.pixelText(size: 15, weight: FontWeight.w600)),
           const Spacer(),
-          Switch(value: value, onChanged: onChanged, activeThumbColor: AppTheme.focusAccent),
+          GestureDetector(
+            onTap: () => onChanged(!value),
+            child: AnimatedContainer(
+              duration: Duration.zero,
+              width: 56,
+              height: 28,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: value ? AppTheme.focusAccent : Colors.transparent, border: Border.all(color: value ? AppTheme.focusAccent : AppTheme.blockShadow, width: 2)),
+              child: Align(alignment: value ? Alignment.centerRight : Alignment.centerLeft, child: Container(width: 16, height: 16, color: value ? AppTheme.blockShadow : AppTheme.textSecondary)),
+            ),
+          ),
         ]),
       );
 }

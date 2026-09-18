@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:just_audio/just_audio.dart';
 
 import '../../domain/entities/session_type.dart';
 import '../../domain/repositories/settings_repository.dart';
@@ -31,6 +33,10 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   final SettingsRepository settingsRepository;
   final SessionHistoryRepository sessionHistoryRepository;
   Timer? _ticker;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final Random _random = Random();
+  String? _loadedTrack;
+  int _audioRequest = 0;
   int _focusMinutes = 25;
   int _shortBreakMinutes = 5;
   int _longBreakMinutes = 15;
@@ -59,18 +65,24 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       add(TimerTicked());
     });
     emit(state.copyWith(isRunning: true));
+    unawaited(_startSoundtrack(++_audioRequest));
   }
 
   Future<void> _onPaused(TimerPaused event, Emitter<TimerState> emit) async {
     _ticker?.cancel();
     _ticker = null;
     emit(state.copyWith(isRunning: false));
+    ++_audioRequest;
+    unawaited(_audioPlayer.pause());
   }
 
   Future<void> _onReset(TimerReset event, Emitter<TimerState> emit) async {
     final duration = _durationFor(state.type);
     _ticker?.cancel();
     _ticker = null;
+    ++_audioRequest;
+    unawaited(_audioPlayer.stop());
+    _loadedTrack = null;
     emit(state.copyWith(
       isRunning: false,
       remainingSeconds: duration,
@@ -103,6 +115,10 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   }
 
   Future<void> _advanceTimer(Emitter<TimerState> emit) async {
+    ++_audioRequest;
+    unawaited(_audioPlayer.stop());
+    _loadedTrack = null;
+
     if (state.type == SessionType.focus) {
       final completed = state.completedFocusSessions + 1;
       await sessionHistoryRepository.record(
@@ -140,9 +156,39 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     ));
   }
 
+  Future<void> _startSoundtrack(int request) async {
+    if (_loadedTrack != null) {
+      if (request == _audioRequest && state.isRunning) {
+        await _audioPlayer.play();
+      }
+      return;
+    }
+
+    const tracks = [
+      'assets/soundeffects/C418 - Wet Hands - Minecraft Volume Alpha.mp3',
+      'assets/soundeffects/C418 - Moog City - Minecraft Volume Alpha.mp3',
+      'assets/soundeffects/C418 - Haggstrom - Minecraft Volume Alpha.mp3',
+      'assets/soundeffects/C418  - Sweden - Minecraft Volume Alpha.mp3',
+    ];
+    final track = tracks[_random.nextInt(tracks.length)];
+    try {
+      await _audioPlayer.setAsset(track);
+      await _audioPlayer.setLoopMode(LoopMode.one);
+      if (request != _audioRequest || !state.isRunning) {
+        await _audioPlayer.stop();
+        return;
+      }
+      _loadedTrack = track;
+      await _audioPlayer.play();
+    } catch (_) {
+      // Timer operation should remain available if audio cannot load.
+    }
+  }
+
   @override
-  Future<void> close() {
+  Future<void> close() async {
     _ticker?.cancel();
+    await _audioPlayer.dispose();
     return super.close();
   }
 }

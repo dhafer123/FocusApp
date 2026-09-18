@@ -17,9 +17,9 @@ class StatsPage extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(22, 28, 22, 28),
             children: [
-              const Text('Stats', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700)),
+              Text('Stats', style: AppTheme.pixelText(size: 32, weight: FontWeight.w700)),
               const SizedBox(height: 8),
-              const Text('Your rhythm, over time.', style: TextStyle(color: AppTheme.textSecondary)),
+              Text('Your rhythm, over time.', style: AppTheme.pixelText(size: 15, color: AppTheme.textSecondary)),
               const SizedBox(height: 30),
               _SectionHeader(title: 'LAST 10 WEEKS', trailing: '${state.sessions.length} sessions'),
               const SizedBox(height: 14),
@@ -35,14 +35,11 @@ class StatsPage extends StatelessWidget {
               const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(color: const Color(0xFF162238), borderRadius: BorderRadius.circular(18)),
+                decoration: AppTheme.block(),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   const Text('Focus minutes', style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 15),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(value: (today / 100).clamp(0, 1), minHeight: 10, backgroundColor: const Color(0xFF26364D), color: AppTheme.focusAccent),
-                  ),
+                  _SegmentedProgress(value: (today / 100).clamp(0, 1)),
                   const SizedBox(height: 12),
                   Text(today == 0 ? 'Complete a session to start your record.' : 'Your focus is adding up.', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
                 ]),
@@ -63,7 +60,7 @@ class _Heatmap extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: const Color(0xFF162238), borderRadius: BorderRadius.circular(18)),
+        decoration: AppTheme.block(),
         child: Wrap(
           spacing: 5,
           runSpacing: 5,
@@ -76,8 +73,8 @@ class _Heatmap extends StatelessWidget {
                 width: 13,
                 height: 13,
                 decoration: BoxDecoration(
-                  color: count == 0 ? Colors.white.withValues(alpha: 0.06) : AppTheme.focusAccent.withValues(alpha: (0.18 + count * 0.16).clamp(0, 1)),
-                  borderRadius: BorderRadius.circular(3),
+                  color: count == 0 ? const Color(0xFF3D2F1F) : count == 1 ? const Color(0xFF6B4E24) : count == 2 ? const Color(0xFFB07A2E) : AppTheme.focusAccent,
+                  border: Border.all(color: AppTheme.blockShadow, width: 1),
                 ),
               ),
             );
@@ -96,9 +93,9 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(color: const Color(0xFF162238), borderRadius: BorderRadius.circular(18)),
+        decoration: AppTheme.block(),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(value, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w600, color: AppTheme.focusAccent)),
+          Text(value, style: AppTheme.timerText(size: 32)),
           Text(unit, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
           const SizedBox(height: 12),
           Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -120,4 +117,27 @@ class _SectionHeader extends StatelessWidget {
           Text(trailing, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
         ],
       );
+}
+
+class _SegmentedProgress extends StatelessWidget {
+  const _SegmentedProgress({required this.value});
+
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    final filled = (value.clamp(0, 1) * 10).floor();
+    return Row(
+      children: List.generate(10, (index) => Expanded(
+        child: Container(
+          height: 14,
+          margin: const EdgeInsets.only(right: 3),
+          decoration: BoxDecoration(
+            color: index < filled ? AppTheme.focusAccent : const Color(0xFF3D2F1F),
+            border: Border.all(color: AppTheme.blockShadow, width: 1),
+          ),
+        ),
+      )),
+    );
+  }
 }
