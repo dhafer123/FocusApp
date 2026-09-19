@@ -40,21 +40,22 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colors(context);
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: colors.background,
       body: Stack(
         fit: StackFit.expand,
         children: [
           const CampfireScene(),
-          Container(color: AppTheme.background.withValues(alpha: 0.55)),
+          Container(color: colors.background.withValues(alpha: 0.55)),
           SafeArea(
             child: BlocBuilder<TimerBloc, TimerState>(
               builder: (context, state) {
                 final accent = state.type == SessionType.focus
-                    ? AppTheme.focusAccent
+                    ? colors.focusAccent
                     : state.type == SessionType.shortBreak
-                    ? AppTheme.shortBreakAccent
-                    : AppTheme.longBreakAccent;
+                    ? colors.shortBreakAccent
+                    : colors.longBreakAccent;
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
                   children: [
@@ -65,7 +66,7 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
                           'WHISKER WORK',
                           style: AppTheme.pixelText(
                             size: 14,
-                            color: AppTheme.textSecondary,
+                            color: colors.textSecondary,
                             weight: FontWeight.w600,
                           ),
                         ),
@@ -73,7 +74,7 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
                           width: 36,
                           height: 36,
                           padding: const EdgeInsets.all(3),
-                          decoration: AppTheme.block(),
+                          decoration: AppTheme.block(palette: colors),
                           child: Image.asset(
                             'assets/logo.png',
                             fit: BoxFit.contain,
@@ -88,7 +89,7 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
                     Center(
                       child: Text(
                         _formatTime(state.remainingSeconds),
-                        style: AppTheme.timerText(),
+                        style: AppTheme.timerText(color: colors.textPrimary),
                       ),
                     ),
                     const SizedBox(height: 30),

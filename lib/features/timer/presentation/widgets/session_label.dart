@@ -10,10 +10,11 @@ class SessionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colors(context);
     final color = switch (type) {
-      SessionType.focus => AppTheme.focusAccent,
-      SessionType.shortBreak => AppTheme.shortBreakAccent,
-      SessionType.longBreak => AppTheme.longBreakAccent,
+      SessionType.focus => colors.focusAccent,
+      SessionType.shortBreak => colors.shortBreakAccent,
+      SessionType.longBreak => colors.longBreakAccent,
     };
 
     return AnimatedDefaultTextStyle(

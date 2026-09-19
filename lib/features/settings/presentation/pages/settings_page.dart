@@ -13,12 +13,14 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: BlocBuilder<SettingsCubit, SettingsState>(
-        builder: (context, state) => ListView(
+        builder: (context, state) {
+          final colors = AppTheme.colors(context);
+          return ListView(
           padding: const EdgeInsets.fromLTRB(22, 28, 22, 28),
           children: [
             Text('Settings', style: AppTheme.pixelText(size: 32, weight: FontWeight.w700)),
             const SizedBox(height: 8),
-            Text('Shape the pace to fit your day.', style: AppTheme.pixelText(size: 15, color: AppTheme.textSecondary)),
+            Text('Shape the pace to fit your day.', style: AppTheme.pixelText(size: 15, color: colors.textSecondary)),
             const SizedBox(height: 30),
             const _SectionHeader(title: 'DURATIONS', trailing: 'minutes'),
             const SizedBox(height: 12),
@@ -62,19 +64,20 @@ class SettingsPage extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () => context.read<SettingsCubit>().setTheme(mode),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: active ? AppTheme.focusAccent : Colors.transparent,
-                      foregroundColor: active ? AppTheme.blockShadow : AppTheme.textSecondary,
-                      side: BorderSide(color: active ? AppTheme.focusAccent : AppTheme.blockShadow, width: 2),
+                      backgroundColor: active ? colors.focusAccent : Colors.transparent,
+                      foregroundColor: active ? colors.blockShadow : colors.textSecondary,
+                      side: BorderSide(color: active ? colors.focusAccent : colors.blockShadow, width: 2),
                       shape: const BeveledRectangleBorder(),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: Text(mode.toUpperCase(), style: AppTheme.pixelText(size: 11, color: active ? AppTheme.blockShadow : AppTheme.textSecondary, weight: FontWeight.w700)),
+                    child: Text(mode.toUpperCase(), style: AppTheme.pixelText(size: 11, color: active ? colors.blockShadow : colors.textSecondary, weight: FontWeight.w700)),
                   ),
                 ),
               );
             }).toList()),
           ],
-        ),
+        );
+        },
       ),
     );
   }
@@ -94,14 +97,14 @@ class _DurationTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: AppTheme.block(),
+      decoration: AppTheme.block(palette: AppTheme.colors(context)),
       child: Row(
         children: [
-          Text(label, style: AppTheme.pixelText(size: 15, weight: FontWeight.w600)),
+          Text(label, style: AppTheme.pixelText(size: 15, color: AppTheme.colors(context).textPrimary, weight: FontWeight.w600)),
           const Spacer(),
-          IconButton(onPressed: value > 1 ? () async { await cubit.setDuration(type, value - 1); timer.add(TimerSettingsRefreshed()); } : null, icon: const Icon(Icons.remove), color: AppTheme.textSecondary),
-          SizedBox(width: 42, child: Center(child: Text('$value', style: AppTheme.timerText(size: 20)))),
-          IconButton(onPressed: () async { await cubit.setDuration(type, value + 1); timer.add(TimerSettingsRefreshed()); }, icon: const Icon(Icons.add), color: AppTheme.textSecondary),
+          IconButton(onPressed: value > 1 ? () async { await cubit.setDuration(type, value - 1); timer.add(TimerSettingsRefreshed()); } : null, icon: const Icon(Icons.remove), color: AppTheme.colors(context).textSecondary),
+          SizedBox(width: 42, child: Center(child: Text('$value', style: AppTheme.timerText(size: 20, color: AppTheme.colors(context).textPrimary)))),
+          IconButton(onPressed: () async { await cubit.setDuration(type, value + 1); timer.add(TimerSettingsRefreshed()); }, icon: const Icon(Icons.add), color: AppTheme.colors(context).textSecondary),
         ],
       ),
     );
@@ -120,11 +123,11 @@ class _ToggleTile extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-        decoration: AppTheme.block(),
+        decoration: AppTheme.block(palette: AppTheme.colors(context)),
         child: Row(children: [
-          Icon(icon, color: AppTheme.textSecondary, size: 20),
+          Icon(icon, color: AppTheme.colors(context).textSecondary, size: 20),
           const SizedBox(width: 13),
-          Text(label, style: AppTheme.pixelText(size: 15, weight: FontWeight.w600)),
+          Text(label, style: AppTheme.pixelText(size: 15, color: AppTheme.colors(context).textPrimary, weight: FontWeight.w600)),
           const Spacer(),
           GestureDetector(
             onTap: () => onChanged(!value),
@@ -133,8 +136,8 @@ class _ToggleTile extends StatelessWidget {
               width: 56,
               height: 28,
               padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(color: value ? AppTheme.focusAccent : Colors.transparent, border: Border.all(color: value ? AppTheme.focusAccent : AppTheme.blockShadow, width: 2)),
-              child: Align(alignment: value ? Alignment.centerRight : Alignment.centerLeft, child: Container(width: 16, height: 16, color: value ? AppTheme.blockShadow : AppTheme.textSecondary)),
+              decoration: BoxDecoration(color: value ? AppTheme.colors(context).focusAccent : Colors.transparent, border: Border.all(color: value ? AppTheme.colors(context).focusAccent : AppTheme.colors(context).blockShadow, width: 2)),
+              child: Align(alignment: value ? Alignment.centerRight : Alignment.centerLeft, child: Container(width: 16, height: 16, color: value ? AppTheme.colors(context).blockShadow : AppTheme.colors(context).textSecondary)),
             ),
           ),
         ]),
@@ -151,8 +154,8 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) => Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11, letterSpacing: 1.4, fontWeight: FontWeight.w700)),
-          Text(trailing, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+          Text(title, style: TextStyle(color: AppTheme.colors(context).textSecondary, fontSize: 11, letterSpacing: 1.4, fontWeight: FontWeight.w700)),
+          Text(trailing, style: TextStyle(color: AppTheme.colors(context).textSecondary, fontSize: 12)),
         ],
       );
 }

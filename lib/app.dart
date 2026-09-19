@@ -37,11 +37,19 @@ class FocusApp extends StatelessWidget {
             BlocProvider(create: (context) => SettingsCubit(context.read<SettingsRepository>())),
             BlocProvider(create: (context) => StatsCubit(context.read<SessionHistoryRepository>())),
           ],
-          child: MaterialApp.router(
-            title: 'Focus',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.theme,
-            routerConfig: AppRouter.router,
+          child: BlocBuilder<SettingsCubit, SettingsState>(
+            builder: (context, settings) => MaterialApp.router(
+              title: 'Focus',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.theme,
+              themeMode: switch (settings.themeMode) {
+                'light' => ThemeMode.light,
+                'dark' => ThemeMode.dark,
+                _ => ThemeMode.system,
+              },
+              routerConfig: AppRouter.router,
+            ),
           ),
         ),
       ),
@@ -56,21 +64,22 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colors(context);
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          systemNavigationBarColor: AppTheme.background,
+        value: SystemUiOverlayStyle(
+          systemNavigationBarColor: colors.background,
           systemNavigationBarIconBrightness: Brightness.light,
         ),
         child: SafeArea(
           top: false,
           child: Container(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-            decoration: const BoxDecoration(
-              color: AppTheme.backgroundRaised,
+            decoration: BoxDecoration(
+              color: colors.backgroundRaised,
               border: Border(
-                top: BorderSide(color: AppTheme.blockShadow, width: 2),
+                top: BorderSide(color: colors.blockShadow, width: 2),
               ),
             ),
             child: Row(
@@ -93,15 +102,15 @@ class AppShell extends StatelessWidget {
                       },
                       style: OutlinedButton.styleFrom(
                         backgroundColor: active
-                            ? AppTheme.focusAccent
+                            ? colors.focusAccent
                             : Colors.transparent,
                         foregroundColor: active
-                            ? AppTheme.blockShadow
-                            : AppTheme.textSecondary,
+                            ? colors.blockShadow
+                            : colors.textSecondary,
                         side: BorderSide(
                           color: active
-                              ? AppTheme.focusAccent
-                              : AppTheme.blockShadow,
+                              ? colors.focusAccent
+                              : colors.blockShadow,
                           width: 2,
                         ),
                         shape: const BeveledRectangleBorder(),
@@ -112,8 +121,8 @@ class AppShell extends StatelessWidget {
                         style: AppTheme.pixelText(
                           size: 12,
                           color: active
-                              ? AppTheme.blockShadow
-                              : AppTheme.textSecondary,
+                              ? colors.blockShadow
+                              : colors.textSecondary,
                           weight: FontWeight.w700,
                         ),
                       ),

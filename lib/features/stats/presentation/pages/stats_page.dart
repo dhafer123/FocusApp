@@ -12,14 +12,15 @@ class StatsPage extends StatelessWidget {
     return SafeArea(
       child: BlocBuilder<StatsCubit, StatsState>(
         builder: (context, state) {
+          final colors = AppTheme.colors(context);
           final cubit = context.read<StatsCubit>();
           final today = cubit.todayMinutes;
           return ListView(
             padding: const EdgeInsets.fromLTRB(22, 28, 22, 28),
             children: [
-              Text('Stats', style: AppTheme.pixelText(size: 32, weight: FontWeight.w700)),
+              Text('Stats', style: AppTheme.pixelText(size: 32, color: colors.textPrimary, weight: FontWeight.w700)),
               const SizedBox(height: 8),
-              Text('Your rhythm, over time.', style: AppTheme.pixelText(size: 15, color: AppTheme.textSecondary)),
+              Text('Your rhythm, over time.', style: AppTheme.pixelText(size: 15, color: colors.textSecondary)),
               const SizedBox(height: 30),
               _SectionHeader(title: 'LAST 10 WEEKS', trailing: '${state.sessions.length} sessions'),
               const SizedBox(height: 14),
@@ -35,13 +36,13 @@ class StatsPage extends StatelessWidget {
               const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.all(18),
-                decoration: AppTheme.block(),
+                decoration: AppTheme.block(palette: colors),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   const Text('Focus minutes', style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 15),
                   _SegmentedProgress(value: (today / 100).clamp(0, 1)),
                   const SizedBox(height: 12),
-                  Text(today == 0 ? 'Complete a session to start your record.' : 'Your focus is adding up.', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  Text(today == 0 ? 'Complete a session to start your record.' : 'Your focus is adding up.', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
                 ]),
               ),
             ],
@@ -58,9 +59,11 @@ class _Heatmap extends StatelessWidget {
   final StatsCubit cubit;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colors(context);
+    return Container(
         padding: const EdgeInsets.all(18),
-        decoration: AppTheme.block(),
+        decoration: AppTheme.block(palette: colors),
         child: Wrap(
           spacing: 5,
           runSpacing: 5,
@@ -73,14 +76,15 @@ class _Heatmap extends StatelessWidget {
                 width: 13,
                 height: 13,
                 decoration: BoxDecoration(
-                  color: count == 0 ? const Color(0xFF3D2F1F) : count == 1 ? const Color(0xFF6B4E24) : count == 2 ? const Color(0xFFB07A2E) : AppTheme.focusAccent,
-                  border: Border.all(color: AppTheme.blockShadow, width: 1),
+                  color: count == 0 ? colors.background : count == 1 ? colors.backgroundRaised : count == 2 ? colors.focusAccent.withValues(alpha: 0.65) : colors.focusAccent,
+                  border: Border.all(color: colors.blockShadow, width: 1),
                 ),
               ),
             );
           }),
         ),
-      );
+        );
+      }
 }
 
 class _StatCard extends StatelessWidget {
@@ -93,10 +97,10 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(18),
-        decoration: AppTheme.block(),
+        decoration: AppTheme.block(palette: AppTheme.colors(context)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(value, style: AppTheme.timerText(size: 32)),
-          Text(unit, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+          Text(value, style: AppTheme.timerText(size: 32, color: AppTheme.colors(context).textPrimary)),
+          Text(unit, style: TextStyle(color: AppTheme.colors(context).textSecondary, fontSize: 12)),
           const SizedBox(height: 12),
           Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         ]),
@@ -113,8 +117,8 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) => Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11, letterSpacing: 1.4, fontWeight: FontWeight.w700)),
-          Text(trailing, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+          Text(title, style: TextStyle(color: AppTheme.colors(context).textSecondary, fontSize: 11, letterSpacing: 1.4, fontWeight: FontWeight.w700)),
+          Text(trailing, style: TextStyle(color: AppTheme.colors(context).textSecondary, fontSize: 12)),
         ],
       );
 }
@@ -133,8 +137,8 @@ class _SegmentedProgress extends StatelessWidget {
           height: 14,
           margin: const EdgeInsets.only(right: 3),
           decoration: BoxDecoration(
-            color: index < filled ? AppTheme.focusAccent : const Color(0xFF3D2F1F),
-            border: Border.all(color: AppTheme.blockShadow, width: 1),
+            color: index < filled ? AppTheme.colors(context).focusAccent : AppTheme.colors(context).background,
+            border: Border.all(color: AppTheme.colors(context).blockShadow, width: 1),
           ),
         ),
       )),

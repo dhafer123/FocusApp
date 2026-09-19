@@ -20,6 +20,7 @@ class ControlButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colors(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -32,7 +33,7 @@ class ControlButtons extends StatelessWidget {
             onPressed: onToggle,
             style: FilledButton.styleFrom(
               backgroundColor: accent,
-              foregroundColor: AppTheme.blockShadow,
+              foregroundColor: colors.blockShadow,
               shape: const BeveledRectangleBorder(),
             ),
             child: Icon(

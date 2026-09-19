@@ -9,6 +9,7 @@ class SessionDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colors(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(4, (index) {
@@ -18,8 +19,8 @@ class SessionDots extends StatelessWidget {
           height: 8,
           margin: const EdgeInsets.symmetric(horizontal: 5),
           decoration: BoxDecoration(
-            color: active ? AppTheme.focusAccent : Colors.transparent,
-            border: Border.all(color: active ? AppTheme.focusAccent : AppTheme.blockShadow, width: 2),
+            color: active ? colors.focusAccent : Colors.transparent,
+            border: Border.all(color: active ? colors.focusAccent : colors.blockShadow, width: 2),
           ),
         );
       }),
