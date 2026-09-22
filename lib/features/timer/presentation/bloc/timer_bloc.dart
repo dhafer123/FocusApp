@@ -212,6 +212,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
         isRunning: false,
         completedFocusSessions: completed,
       ));
+      await _autoStartNextSession();
       return;
     }
 
@@ -225,6 +226,13 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       totalSeconds: duration,
       isRunning: false,
     ));
+    await _autoStartNextSession();
+  }
+
+  Future<void> _autoStartNextSession() async {
+    if (await settingsRepository.getAutoStartEnabled()) {
+      add(TimerStarted());
+    }
   }
 
   Future<void> _startSoundtrack(int request, {bool? enabled}) async {

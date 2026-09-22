@@ -39,7 +39,7 @@ class FocusApp extends StatelessWidget {
           ],
           child: BlocBuilder<SettingsCubit, SettingsState>(
             builder: (context, settings) => MaterialApp.router(
-              title: 'Focus',
+              title: 'Whisker Work',
               debugShowCheckedModeBanner: false,
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.theme,
@@ -70,7 +70,10 @@ class AppShell extends StatelessWidget {
       bottomNavigationBar: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
           systemNavigationBarColor: colors.background,
-          systemNavigationBarIconBrightness: Brightness.light,
+            systemNavigationBarIconBrightness:
+              Theme.of(context).brightness == Brightness.light
+                ? Brightness.dark
+                : Brightness.light,
         ),
         child: SafeArea(
           top: false,
@@ -86,6 +89,12 @@ class AppShell extends StatelessWidget {
               children: List.generate(3, (index) {
                 final active = navigationShell.currentIndex == index;
                 final labels = ['TIME', 'STATS', 'SET'];
+                final navigationTextColor =
+                  Theme.of(context).brightness == Brightness.light
+                    ? Colors.white
+                    : active
+                      ? colors.blockShadow
+                      : colors.textSecondary;
                 return Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -102,17 +111,18 @@ class AppShell extends StatelessWidget {
                       },
                       style: OutlinedButton.styleFrom(
                         backgroundColor: active
-                            ? colors.focusAccent
+                          ? colors.focusAccent
                             : Colors.transparent,
                         foregroundColor: active
-                            ? colors.blockShadow
-                            : colors.textSecondary,
+                          ? navigationTextColor
+                          : navigationTextColor,
                         side: BorderSide(
                           color: active
                               ? colors.focusAccent
                               : colors.blockShadow,
                           width: 2,
                         ),
+                        overlayColor: colors.focusAccent.withValues(alpha: 0.12),
                         shape: const BeveledRectangleBorder(),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
@@ -120,9 +130,7 @@ class AppShell extends StatelessWidget {
                         labels[index],
                         style: AppTheme.pixelText(
                           size: 12,
-                          color: active
-                              ? colors.blockShadow
-                              : colors.textSecondary,
+                            color: navigationTextColor,
                           weight: FontWeight.w700,
                         ),
                       ),

@@ -92,14 +92,14 @@ class AppTheme {
     return _buildTheme(
       light,
       const FocusColors(
-        background: Color(0xFFF7F1E8),
-        backgroundRaised: Color(0xFFFFFBF4),
-        focusAccent: Color(0xFFC8792B),
-        shortBreakAccent: Color(0xFF4D8A3A),
-        longBreakAccent: Color(0xFF34779D),
-        textPrimary: Color(0xFF2B2430),
-        textSecondary: Color(0xFF6D6573),
-        blockShadow: Color(0xFFB8A99B),
+        background: Color(0xFFD2CCC5),
+        backgroundRaised: Color(0xFFDED7CF),
+        focusAccent: Color(0xFFA96627),
+        shortBreakAccent: Color(0xFF467A37),
+        longBreakAccent: Color(0xFF326C8E),
+        textPrimary: Color(0xFF302A32),
+        textSecondary: Color(0xFF5F5961),
+        blockShadow: Color(0xFF8F8780),
       ),
       Brightness.light,
     );

@@ -38,7 +38,7 @@ class StatsPage extends StatelessWidget {
                 padding: const EdgeInsets.all(18),
                 decoration: AppTheme.block(palette: colors),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('Focus minutes', style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text('Focus minutes', style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 15),
                   _SegmentedProgress(value: (today / 100).clamp(0, 1)),
                   const SizedBox(height: 12),
@@ -102,7 +102,7 @@ class _StatCard extends StatelessWidget {
           Text(value, style: AppTheme.timerText(size: 32, color: AppTheme.colors(context).textPrimary)),
           Text(unit, style: TextStyle(color: AppTheme.colors(context).textSecondary, fontSize: 12)),
           const SizedBox(height: 12),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(label, style: TextStyle(color: AppTheme.colors(context).textPrimary, fontWeight: FontWeight.w600)),
         ]),
       );
 }

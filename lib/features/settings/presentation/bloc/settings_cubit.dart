@@ -10,6 +10,7 @@ class SettingsState extends Equatable {
     this.longBreakMinutes = 15,
     this.soundEnabled = true,
     this.notificationSoundEnabled = true,
+    this.autoStartEnabled = false,
     this.hapticsEnabled = true,
     this.themeMode = 'system',
   });
@@ -19,6 +20,7 @@ class SettingsState extends Equatable {
   final int longBreakMinutes;
   final bool soundEnabled;
   final bool notificationSoundEnabled;
+  final bool autoStartEnabled;
   final bool hapticsEnabled;
   final String themeMode;
 
@@ -28,6 +30,7 @@ class SettingsState extends Equatable {
     int? longBreakMinutes,
     bool? soundEnabled,
     bool? notificationSoundEnabled,
+    bool? autoStartEnabled,
     bool? hapticsEnabled,
     String? themeMode,
   }) {
@@ -38,13 +41,14 @@ class SettingsState extends Equatable {
       soundEnabled: soundEnabled ?? this.soundEnabled,
         notificationSoundEnabled:
           notificationSoundEnabled ?? this.notificationSoundEnabled,
+          autoStartEnabled: autoStartEnabled ?? this.autoStartEnabled,
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       themeMode: themeMode ?? this.themeMode,
     );
   }
 
   @override
-  List<Object> get props => [focusMinutes, shortBreakMinutes, longBreakMinutes, soundEnabled, notificationSoundEnabled, hapticsEnabled, themeMode];
+  List<Object> get props => [focusMinutes, shortBreakMinutes, longBreakMinutes, soundEnabled, notificationSoundEnabled, autoStartEnabled, hapticsEnabled, themeMode];
 }
 
 class SettingsCubit extends Cubit<SettingsState> {
@@ -62,6 +66,7 @@ class SettingsCubit extends Cubit<SettingsState> {
       soundEnabled: await repository.getSoundEnabled(),
         notificationSoundEnabled:
           await repository.getNotificationSoundEnabled(),
+          autoStartEnabled: await repository.getAutoStartEnabled(),
       hapticsEnabled: await repository.getHapticsEnabled(),
       themeMode: await repository.getThemeMode(),
     ));
@@ -91,6 +96,11 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> setNotificationSound(bool value) async {
     await repository.setNotificationSoundEnabled(value);
     emit(state.copyWith(notificationSoundEnabled: value));
+  }
+
+  Future<void> setAutoStart(bool value) async {
+    await repository.setAutoStartEnabled(value);
+    emit(state.copyWith(autoStartEnabled: value));
   }
 
   Future<void> setTheme(String value) async {

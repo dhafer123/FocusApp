@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:just_audio/just_audio.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../settings/presentation/bloc/settings_cubit.dart';
 import '../../domain/entities/session_type.dart';
 import '../bloc/timer_bloc.dart';
 import '../bloc/timer_event.dart';
 import '../bloc/timer_state.dart';
 import '../widgets/campfire_scene.dart';
 import '../widgets/control_buttons.dart';
-import '../widgets/session_dots.dart';
 import '../widgets/session_label.dart';
 
 class TimerPage extends StatefulWidget {
@@ -19,6 +20,8 @@ class TimerPage extends StatefulWidget {
 }
 
 class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
+  final AudioPlayer _celebrationPlayer = AudioPlayer();
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +31,7 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _celebrationPlayer.dispose();
     super.dispose();
   }
 
@@ -41,16 +45,32 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colors(context);
+    final isLightMode = Theme.of(context).brightness == Brightness.light;
+    final sceneForeground = isLightMode
+        ? const Color(0xFFF4EDE4)
+        : colors.textPrimary;
     return Scaffold(
       backgroundColor: colors.background,
       body: Stack(
         fit: StackFit.expand,
         children: [
           const CampfireScene(),
-          Container(color: colors.background.withValues(alpha: 0.55)),
+          Container(
+            color: isLightMode
+                ? Colors.black.withValues(alpha: 0.32)
+                : colors.background.withValues(alpha: 0.55),
+          ),
           SafeArea(
-            child: BlocBuilder<TimerBloc, TimerState>(
-              builder: (context, state) {
+            child: BlocListener<TimerBloc, TimerState>(
+              listenWhen: (previous, current) =>
+                  current.completedFocusSessions >
+                      previous.completedFocusSessions &&
+                  current.completedFocusSessions % 4 == 0,
+              listener: (context, state) {
+                _showCycleCelebration(context);
+              },
+              child: BlocBuilder<TimerBloc, TimerState>(
+                builder: (context, state) {
                 final accent = state.type == SessionType.focus
                     ? colors.focusAccent
                     : state.type == SessionType.shortBreak
@@ -66,7 +86,7 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
                           'WHISKER WORK',
                           style: AppTheme.pixelText(
                             size: 14,
-                            color: colors.textSecondary,
+                            color: sceneForeground,
                             weight: FontWeight.w600,
                           ),
                         ),
@@ -89,7 +109,7 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
                     Center(
                       child: Text(
                         _formatTime(state.remainingSeconds),
-                        style: AppTheme.timerText(color: colors.textPrimary),
+                        style: AppTheme.timerText(color: sceneForeground),
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -105,7 +125,7 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
                           context.read<TimerBloc>().add(TimerSkipped()),
                     ),
                     const SizedBox(height: 24),
-                    SessionDots(completed: state.completedFocusSessions),
+                    _CycleProgress(completed: state.completedFocusSessions),
                     const SizedBox(height: 20),
                     _MotivationQuote(
                       progress: 1 - state.remainingSeconds / state.totalSeconds,
@@ -113,7 +133,60 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
                     ),
                   ],
                 );
-              },
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showCycleCelebration(BuildContext context) async {
+    final colors = AppTheme.colors(context);
+    final settings = context.read<SettingsCubit>().state;
+    if (settings.notificationSoundEnabled) {
+      try {
+        await _celebrationPlayer.setAsset(
+          'assets/soundeffects/success-sound-effect_zPBDmIhP.mp3',
+        );
+        await _celebrationPlayer.play();
+      } catch (_) {
+        // The celebration dialog remains available if audio cannot load.
+      }
+    }
+
+    if (!context.mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: colors.backgroundRaised,
+        shape: BeveledRectangleBorder(
+          side: BorderSide(color: colors.focusAccent, width: 2),
+        ),
+        title: Text(
+          'Cycle complete!',
+          style: AppTheme.pixelText(
+            size: 22,
+            color: colors.textPrimary,
+            weight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          'Four focus sessions finished. Take a well-earned long break.',
+          style: AppTheme.pixelText(size: 14, color: colors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            style: TextButton.styleFrom(foregroundColor: colors.focusAccent),
+            child: Text(
+              'CONTINUE',
+              style: AppTheme.pixelText(
+                size: 12,
+                color: colors.focusAccent,
+                weight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -128,19 +201,41 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
   }
 }
 
+class _CycleProgress extends StatelessWidget {
+  const _CycleProgress({required this.completed});
+
+  final int completed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colors(context);
+    final cyclePosition = completed % 4 + 1;
+    return Center(
+      child: Text(
+        'CYCLE $cyclePosition / 4',
+        style: AppTheme.pixelText(
+          size: 11,
+          color: colors.textSecondary,
+          weight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
 class _MotivationQuote extends StatelessWidget {
   const _MotivationQuote({required this.progress, required this.accent});
 
   static const quotes = [
-    'Start where you are.',
-    'One quiet minute at a time.',
-    'Small steps still move you forward.',
-    'Keep going. You are building momentum.',
-    'Your attention is a place you can return to.',
-    'The work is becoming lighter.',
-    'Stay with it. You are closer than you think.',
-    'Finish this moment with care.',
-  ];
+  'You’ve got this.',
+  'One step at a time.',
+  'Keep moving forward.',
+  'You’re doing great.',
+  'Progress takes time.',
+  'Stay with it.',
+  'Keep the momentum.',
+  'You’re making progress.',
+];
 
   final double progress;
   final Color accent;

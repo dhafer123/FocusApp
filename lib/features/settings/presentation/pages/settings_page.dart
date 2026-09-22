@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,7 +20,7 @@ class SettingsPage extends StatelessWidget {
           return ListView(
           padding: const EdgeInsets.fromLTRB(22, 28, 22, 28),
           children: [
-            Text('Settings', style: AppTheme.pixelText(size: 32, weight: FontWeight.w700)),
+            Text('Settings', style: AppTheme.pixelText(size: 32, color: colors.textPrimary, weight: FontWeight.w700)),
             const SizedBox(height: 8),
             Text('Shape the pace to fit your day.', style: AppTheme.pixelText(size: 15, color: colors.textSecondary)),
             const SizedBox(height: 30),
@@ -52,7 +54,12 @@ class SettingsPage extends StatelessWidget {
                     );
               },
             ),
-            _ToggleTile(label: 'Haptic feedback', icon: Icons.vibration_outlined, value: state.hapticsEnabled, onChanged: context.read<SettingsCubit>().setHaptics),
+            _ToggleTile(
+              label: 'Auto-start next session',
+              icon: Icons.play_circle_outline,
+              value: state.autoStartEnabled,
+              onChanged: context.read<SettingsCubit>().setAutoStart,
+            ),
             const SizedBox(height: 22),
             const _SectionHeader(title: 'APPEARANCE'),
             const SizedBox(height: 12),
@@ -102,10 +109,91 @@ class _DurationTile extends StatelessWidget {
         children: [
           Text(label, style: AppTheme.pixelText(size: 15, color: AppTheme.colors(context).textPrimary, weight: FontWeight.w600)),
           const Spacer(),
-          IconButton(onPressed: value > 1 ? () async { await cubit.setDuration(type, value - 1); timer.add(TimerSettingsRefreshed()); } : null, icon: const Icon(Icons.remove), color: AppTheme.colors(context).textSecondary),
+          _HoldActionButton(
+            icon: Icons.remove,
+            enabled: value > 1,
+            onPressed: () async {
+              final current = _currentDuration(cubit.state, type);
+              if (current <= 1) return;
+              await cubit.setDuration(type, current - 1);
+              timer.add(TimerSettingsRefreshed());
+            },
+          ),
           SizedBox(width: 42, child: Center(child: Text('$value', style: AppTheme.timerText(size: 20, color: AppTheme.colors(context).textPrimary)))),
-          IconButton(onPressed: () async { await cubit.setDuration(type, value + 1); timer.add(TimerSettingsRefreshed()); }, icon: const Icon(Icons.add), color: AppTheme.colors(context).textSecondary),
+          _HoldActionButton(
+            icon: Icons.add,
+            onPressed: () async {
+              final current = _currentDuration(cubit.state, type);
+              await cubit.setDuration(type, current + 1);
+              timer.add(TimerSettingsRefreshed());
+            },
+          ),
         ],
+      ),
+    );
+  }
+}
+
+int _currentDuration(SettingsState state, String type) {
+  return switch (type) {
+    'focus' => state.focusMinutes,
+    'short' => state.shortBreakMinutes,
+    'long' => state.longBreakMinutes,
+    _ => 1,
+  };
+}
+
+class _HoldActionButton extends StatefulWidget {
+  const _HoldActionButton({
+    required this.icon,
+    required this.onPressed,
+    this.enabled = true,
+  });
+
+  final IconData icon;
+  final Future<void> Function() onPressed;
+  final bool enabled;
+
+  @override
+  State<_HoldActionButton> createState() => _HoldActionButtonState();
+}
+
+class _HoldActionButtonState extends State<_HoldActionButton> {
+  Timer? _repeatTimer;
+
+  void _startRepeating() {
+    if (!widget.enabled) return;
+    _stopRepeating();
+    unawaited(widget.onPressed());
+    _repeatTimer = Timer(const Duration(milliseconds: 450), () {
+      _repeatTimer = Timer.periodic(
+        const Duration(milliseconds: 100),
+        (_) => unawaited(widget.onPressed()),
+      );
+    });
+  }
+
+  void _stopRepeating() {
+    _repeatTimer?.cancel();
+    _repeatTimer = null;
+  }
+
+  @override
+  void dispose() {
+    _stopRepeating();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colors(context);
+    return GestureDetector(
+      onTapDown: (_) => _startRepeating(),
+      onTapUp: (_) => _stopRepeating(),
+      onTapCancel: _stopRepeating,
+      child: Icon(
+        widget.icon,
+        color: widget.enabled ? colors.textSecondary : colors.blockShadow,
       ),
     );
   }
