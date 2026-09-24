@@ -13,6 +13,7 @@ import 'package:focus/app.dart';
 void main() {
   testWidgets('renders the Focus timer', (WidgetTester tester) async {
     await tester.pumpWidget(const FocusApp());
+    await tester.pump(const Duration(milliseconds: 1900));
     expect(find.text('Focus'), findsWidgets);
     expect(find.text('25:00'), findsOneWidget);
 

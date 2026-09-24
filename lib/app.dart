@@ -12,6 +12,7 @@ import 'features/settings/presentation/bloc/settings_cubit.dart';
 import 'features/timer/data/repositories/settings_repository_impl.dart';
 import 'features/timer/domain/repositories/settings_repository.dart';
 import 'features/timer/presentation/bloc/timer_bloc.dart';
+import 'features/timer/presentation/widgets/startup_splash.dart';
 
 class FocusApp extends StatelessWidget {
   const FocusApp({super.key});
@@ -49,6 +50,9 @@ class FocusApp extends StatelessWidget {
                 _ => ThemeMode.system,
               },
               routerConfig: AppRouter.router,
+              builder: (context, child) => StartupSplash(
+                child: child ?? const SizedBox.shrink(),
+              ),
             ),
           ),
         ),
